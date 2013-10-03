@@ -1,0 +1,41 @@
+{
+    "dotfile_path": "profile/dotfiles/",
+    "dotfile_prefix": ".",
+
+    "links": {
+
+        "bin": "~/profile/bin",
+        "dotfiles": "~/profile/dotfiles",
+
+        ".bashrc": null,
+        ".bash_profile": null,
+        ".bash_completion": null,
+
+        ".ackrc": null,
+
+        ".gitignore_global": null,
+        ".gitconfig": null,
+
+        ".ssh/config": null,
+        ".ssh/authorized_keys": null,
+
+        ".config/Thunar/uca.xml": null,
+
+        ".gnomerc": null,
+        ".fonts": null,
+        ".Xdefaults": null,
+        ".dircolors": null,
+        ".dmrc": null,
+
+        ".pypirc": null,
+        ".pdbrc": null,
+        ".virtualenvs/postmkvirtualenv": null,
+
+        ".gemrc": null,
+
+        ".screenrc": null,
+        ".inputrc": null,
+        ".hushlogin": null
+    }
+
+}
