@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+FFMPEG_AVCONV=0
+
+function ffmpeg-separate () {
+    if [[ $# != 3 ]]; then
+        echo "Usage: $FUNCNAME input.mkv stream[,stream...] output.mkv"
+        exit 2
+    fi
+
+    local OUTPUT="${!#}"
+    local INPUT="$1"
+    # http://stackoverflow.com/questions/2458485/removing-final-bash-script-argument
+    local ARGS="${@:2:$(($#-2))}"  # remove first and last (start at #2 and return n-2 args)
+
+    # http://stackoverflow.com/questions/918886/how-do-i-split-a-string-on-a-delimiter-in-bash
+    IFS=',' read -ra STREAMS <<< "${ARGS[0]}"
+
+    if [[ ! -f "$INPUT" ]]; then
+        echo "$FUNCNAME: input file '$INPUT' does not exist."
+        exit 3
+    fi
+    if [[ -e "$OUTPUT" ]]; then
+        echo "$FUNCNAME: output file '$OUTPUT' already exists."
+        #exit 4
+    fi
+
+    if [[ $FFMPEG_AVCONV != 0 ]]; then
+        echo "$FUNCNAME: no support for ffmpeg-avconv."
+    else
+        local MAP_ARGS=""
+        for STREAM_NO in "${STREAMS[@]}"; do
+            MAP_ARGS="$MAP_ARGS -map 0:$STREAM_NO"
+        done
+
+        ffmpeg -i "$INPUT" $MAP_ARGS -acodec copy -vcodec copy "$OUTPUT"
+    fi
+}
+
+ffmpeg-separate "$@"

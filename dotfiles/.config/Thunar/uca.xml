@@ -1,0 +1,72 @@
+<?xml encoding="UTF-8" version="1.0"?>
+<actions>
+<action>
+	<icon>Terminal</icon>
+	<name>Open terminal here</name>
+	<command>rxvt-unicode -cd %d</command>
+	<description></description>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+</action>
+<action>
+	<icon></icon>
+	<name>Meld</name>
+	<command>meld %F</command>
+	<description></description>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+	<other-files/>
+	<text-files/>
+</action>
+<action>
+	<icon></icon>
+	<name>Convert to PDF</name>
+	<command>unoconv -f pdf %F</command>
+	<description></description>
+	<patterns>*.doc;*.docx;*.odt;*.odp;*.pps;*.ppt;*.xls;*.xlsx;*.ods;*.pptx</patterns>
+	<other-files/>
+</action>
+<action>
+	<icon></icon>
+	<name>Create tar.gz from folder</name>
+	<command>tar czvf %n.tar.gz %n</command>
+	<description></description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>extract-archive</icon>
+	<name>Extract to subdirectory</name>
+	<command>~/bin/_thunar_extract-to-subdirectory %N</command>
+	<description>Creates a subdirectory named after the archive (sans extension) and extracts the archive into it.</description>
+	<patterns>*.zip;*.7z;*.rar;*.xz;*.gz;*.gzip;*.bzip2;*.bz2</patterns>
+	<other-files/>
+</action>
+<action>
+	<icon></icon>
+	<name>Move files to current directory (recursive)</name>
+	<command>find . -mindepth 2 -type f -exec mv &quot;{}&quot; . \;</command>
+	<description>All files contained in the selected directories and their subdirectories will be moved here.</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon></icon>
+	<name>Delete empty directories (recursive)</name>
+	<command>find . -type d -empty -delete</command>
+	<description></description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon></icon>
+	<name>Show media metadata</name>
+	<command>ffmpeg -i %f  2&gt;&amp;1 | grep -e Stream -e Duration -e Input | zenity --width=800 --height=240 --text-info --title %n</command>
+	<description></description>
+	<patterns>*</patterns>
+	<audio-files/>
+	<video-files/>
+</action>
+</actions>

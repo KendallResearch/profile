@@ -1,0 +1,192 @@
+[user]
+	name = Kevin Kelley
+	email = kelleyk@kelleyk.net
+
+[core]
+	excludesfile = ~/.gitignore_global
+	# Convert CRLF to LF on commit but not the other way around; appropriate for Linux & MacOS.
+	autocrlf = input
+
+[push]
+    default = tracking
+
+[grep]
+    lineNumber = true        # always show line numbers
+    extendRegexp = true      # allow extended regexes
+
+[branch]
+    # By default, set `git config branch.<name>.rebase` to true; will
+    # rebase instead of merging when we pull.  Can merge instead by pulling
+	# with --no-rebase.
+    autosetuprebase = always
+
+# This is not a built-in git feature; my wrapper (prefix-bin/git) fetches these.
+[defaultargs]
+    log = "--oneline --decorate"
+    diff = "--word-diff --color-words"
+    status = "-sb"
+    
+[color]
+    ui = auto
+
+[color "diff"]
+    # Remember that the "bold" colors are taken over by the solarized theme.
+
+    # "... The value for these configuration variables is a list of colors (at most two) and
+    # attributes (at most one), separated by spaces. The colors accepted are normal, black, red,
+    # green, yellow, blue, magenta, cyan and white; the attributes are bold, dim, ul, blink and
+    # reverse. The first color given is the foreground; the second is the background. The
+    # position of the attribute, if any, doesn’t matter. ..."
+
+    meta = magenta  
+	old = red
+	new = green
+	frag = blue
+    commit = yellow
+    # whitespace = normal red
+
+[color "branch"]
+    current = green reverse
+    local = green
+    remote = blue
+    plain = red
+
+[color "status"]
+    added = green
+    changed = yellow
+    removed = red
+    untracked = blue
+
+[url "git@github.com:"]
+    insteadOf = "github:"
+    insteadOf = "gh:"
+    insteadOf = "git://github.com/"
+    insteadOf = "http://github.com/"
+    insteadOf = "http://www.github.com/"
+    insteadOf = "https://github.com/"
+    insteadOf = "https://www.github.com/"
+
+[url "git@gist.github.com:"]
+    insteadOf = "gist:"
+    insteadOf = "git://gist.github.com/"
+
+[url "ssh://dog.dev.solid//var/git/"]
+    insteadOf = "solid:"
+
+# Based on, among others:
+# - http://durdn.com/blog/2012/11/22/must-have-git-aliases-advanced-examples/
+# - http://oli.jp/2012/git-powerup/
+# - https://coderwall.com/p/euwpig
+# - http://stackoverflow.com/questions/1441010
+[alias]
+
+    # List aliases.
+    alias-nc = "!git config -l | grep alias | cut -c 7-"
+    #alias = "!f(){ git alias-nc | sed -e 's/^[^=]\\+/\\x1b[7m&\\x1b[0m/g'; }; f"  # ugh.  highlight first word.
+    alias = "!f(){ git alias-nc | sed -r 's/^[^=]+/\\x1b[7m&\\x1b[0m/g'; }; f"  # same as above line
+
+    # Basic shortcuts
+    cp = cherry-pick
+    st = status
+    cl = clone
+    ci = commit
+    co = checkout
+    br = branch
+    
+    # Reset
+    # r = "reset"
+    reset1 = "reset HEAD^"
+    reset2 = "reset HEAD^^"
+    hard = "reset --hard"
+    hard1 = "reset HEAD^ --hard"
+    hard2 = "reset HEAD^^ --hard"
+
+    # Diff
+    # --word-diff shows words added/removed inline with each other, instead of showing the
+    #   entire new and old lines;
+    # --color-words removes the [- -] around removals and the {+ +} around additions in favor
+    #   of just coloring removals red and additions green.
+    d = diff
+    # --word-diff --color-words  # -- flags now supplied via defaultargs
+
+    # Show files modified in last commit.
+    last-commit-modified = "!git ll -1"
+    # Show diff with last commit.
+    last-commit-diff = "!git diff --cached HEAD^"
+    last-commit-meld = "meld --cached HEAD^"    
+
+    # Meld the differences between two refspecs.  If none are specified, comapre the working copy to
+    # the index (i.e. show uncommitted changes).
+	meld = !~/profile/scripts/git-meld.pl
+    # Print just the name of the current branch; useful for scripting.
+    branch-name = !git branch | grep '* ' | tr -d '* '
+
+    # Assume-unchanged:
+    assume = update-index --assume-unchanged
+    unassume = update-index --no-assume-unchanged
+    assumed = "!git ls-files -v | grep ^h | cut -c 3-"  # list assumed files
+    unassumeall = "!git assumed | xargs git update-index --no-assume-unchanged"
+    assumeall = "!git st -s | awk {'print $2'} | xargs git assume"
+
+    # Tags
+    lasttag = describe --tags --abbrev=0
+    lt = describe --tags --abbrev=0
+
+    # Merge
+    ours = "!f() { git checkout --ours $@ && git add $@; }; f"
+    theirs = "!f() { git checkout --theirs $@ && git add $@; }; f"
+    
+    # N.B.: You can search the git log with "git log -S'pattern'"
+    # List commits (short);
+    ls = log --pretty=format:'%C(yellow)%h %Cred%ad %Cblue%an%Cgreen%d %Creset%s' --date=short
+    # ...and long;
+    ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
+    # ...and no colors (for scripting use); author is also in brackets at end of line.
+    lnc = log --pretty=format:"%h\\ %s\\ [%cn]"
+    # graph!
+    lg = "!git ls --graph"
+
+    # Mostly-useless repository stats
+    stat-commits-total = "!git log -a --pretty=oneline | wc -l"
+    stat-commits-by-author = "shortlog -sn"
+    
+    # Show content (full diff) of a commit given a refspec.
+    show-commit-contents = "!f() { git diff "$1"^.."$1"; }; f"
+
+    # Find a file path in codebase (beats having to tell ack or grep how to find the project root).
+    f = "!git ls-files | grep -i"
+
+    # Search in files.
+    # see alias resources above, and:
+    # - http://travisjeffery.com/b/2012/02/search-a-git-repo-like-a-ninja/
+    # - https://github.com/nhooey/git-ack/blob/master/git-ack
+    grep = "grep -Ii --break --heading --line-number"
+    grep-root = "!f() { A=$(pwd) && TOPLEVEL=$(git rev-parse --show-toplevel) && cd $TOPLEVEL && git grep --full-name -In $1 | xargs -I{} echo $TOPLEVEL/{} && cd $A; }; f"
+    gr = "grep"
+    gra = "!git grep-root"
+
+    ack-root = "!f() { ack-grep "$@" $(git root); }; f"
+    ar = "!git ack-root"
+
+    # Show absolute path of repository root.
+    root = "rev-parse --show-toplevel"
+
+	# Remove everything, files or directories, ignored or not, that isn't under version control.
+	wipe = !git clean -f -x -d
+    # Actually remove a submodule and references to it that sometimes linger.
+	nuke-submodule = !~/profile/scripts/git-submodule-nuke.sh
+
+	# Create a new repository on the remote server, set it as this repository's upstream, and then
+    # push "master" to it.
+    # Usage: e.g. `git establish git-server.example.com /absolute/path/to/repo`
+	establish = "!f(){ git remote rm origin || true ; ssh $1 \"mkdir $2 && cd $2 && git init --bare\" ; echo $2 ; git remote add origin \"ssh://$1/$2\" ; git push origin master --set-upstream ; }; f"
+
+    # Push branch to origin and begin tracking the new remote.
+    push-upstream = !git push --set-upstream origin early-imports
+	# Pull from master and checkout all appropriate submodule commits.
+	pullall = "!f(){ git pull \"$@\" && git submodule update --init --recursive; }; f"
+	# Pull from master and get latest for all submodules.  Per man page, have to update afterwards.
+	updateall = "!f(){ git pull --recurse-submodules \"$@\" ; git submodule update --init --recursive ; }; f"
+	pushall = "!f(){ git push \"$@\" ; git submodule foreach git push; }; f"
+	sync = "!f(){ git pull && git push; }; f"
+

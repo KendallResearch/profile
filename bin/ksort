@@ -1,0 +1,178 @@
+#!/usr/bin/env python2.7
+# -*- mode: python; -*-
+from __future__ import unicode_literals, print_function, absolute_import
+
+import sys
+import argparse
+from intensional import Re
+
+
+class Fizzle(object):
+    def debug(self, s):
+        #print(s)
+        pass
+log = Fizzle()
+
+SIZE_VALUE_PATTERN = Re(r'^(\d+(?:\.\d*)?)([bkmgt]?)i?b?$', Re.I)
+_SIZE_PREFIX_MAGNITUDE = {
+    '': 1,
+    'b': 1,
+    'k': 1024,
+    'm': 1024 ** 2,
+    'g': 1024 ** 3,
+    't': 1024 ** 4,
+    }
+def parse_size_value(s):
+    if s not in SIZE_VALUE_PATTERN:
+        raise ValueError('Not a size-like value: {}'.format(s))
+    value = int(Re._[1])
+    unit_prefix = Re._[2].lower()
+    return value * _SIZE_PREFIX_MAGNITUDE[unit_prefix]
+
+def ksort(data, args):
+    lines = data.splitlines()
+
+    # Separate out header/trailer lines.
+    header_lines = lines[:args.header_lines]
+    lines = lines[args.header_lines:]
+    if args.trailer_lines > 0:
+        trailer_lines = lines[-args.trailer_lines:]
+        lines = lines[:-args.trailer_lines]
+    else:
+        trailer_lines = []
+
+    # Split sort column out of each remaining line.
+    delim = args.delimiter
+    if delim == ' ':
+        delim = None  # Python does some fancy things here.  # XXX: is this wanted/necesary?
+    if args.show_keys:
+        print('Selecting 1-indexed column {} using delimiter {!r}.'.format(args.column, args.delimiter), file=sys.stderr)
+
+    if args.column < 1:
+        print('Columns are 1-indexed.', file=sys.stderr)
+        sys.exit(1)
+    try:
+        key_column_raw = [line.split(delim)[args.column - 1].strip() for line in lines]
+    except IndexError:
+        print('One or more lines do not have enough column(s).', file=sys.stderr)
+        sys.exit(1)
+
+    # Try to guess key column type if sorting as --auto-type.
+    key_type = args.key_type
+    if key_type == 'auto':
+        if args.show_keys:
+            print('Detecting key type automatically (or trying to).', file=sys.stderr)
+        if all_of_type(key_column_raw, int):
+            key_type = 'int'
+        elif all_of_type(key_column_raw, float):
+            key_type = 'float'
+        elif all(x in SIZE_VALUE_PATTERN for x in key_column_raw):
+            key_type = 'size'
+        else:
+            key_type = 'alpha'
+
+    # Generate sort key for each remaining line.
+    if args.show_keys:
+        print('Key values: {}'.format(key_column_raw), file=sys.stderr)
+        print('Selected key type: {}'.format(key_type), file=sys.stderr)
+    try:
+        if key_type == 'alpha':
+            key_column = key_column_raw
+        elif key_type == 'int':
+            key_column = [int(x) for x in key_column_raw]
+        elif key_type == 'float':
+            key_column = [float(x) for x in key_column_raw]
+        elif key_type == 'size':
+            key_column = [parse_size_value(x) for x in key_column_raw]
+        else:
+            raise Exception('Oops.. should not be able to reach this line.')
+    except ValueError:
+        print('One or more values in the given column could not be converted to the proper type.', file=sys.stderr)
+        sys.exit(1)
+
+    if args.show_keys:
+        print('Parsed key values: {}'.format(key_column), file=sys.stderr)
+
+    # Sort by the interpreted values.
+    lines = list(line for key, line in sorted(zip(key_column, lines), reverse=args.reverse))
+
+    # Reassemble the output.
+    return '\n'.join(header_lines + lines + trailer_lines) + '\n'
+
+def all_of_type(values, cls):
+    try:
+        for value in values:
+            cls(value)
+    except ValueError:
+        return False
+    else:
+        return True
+
+def build_parser():
+    # argparse magic: For -h and -t, if the argument is just not given, then the value from
+    # 'default' is used; if it is given but without a parameter, then the value from 'const' is
+    # used.
+
+    # argparse gotcha: (roughly quoted from the pydocs) If you supply nargs=1, then you will get a
+    # list of one item; this is different than the default behavior (if you don't supply nargs at
+    # all) of giving you just the item itself.
+
+    parser = argparse.ArgumentParser(add_help=False)  # we want -h  # TODO: re-add --help (long option only)
+    parser.set_defaults(action=ksort, key_type='auto', reverse=False)
+
+    parser.add_argument('-h', '--header-lines', '--head-lines',
+                        nargs='?', metavar='N', type=int, default=0, const=1, action='store',
+                        help='N lines at the beginning of the output will not be sorted.')
+    parser.add_argument('-t', '--trailer-lines', '--tail-lines', '--footer-lines', '--foot-lines',
+                        nargs='?', metavar='N', type=int, default=0, const=1, action='store',
+                        help='N lines at the end of the input will not be sorted.')
+    parser.add_argument('-c', '--column',
+                        metavar='N', type=int, default=1, action='store',
+                        help='The 1-indexed column number to sort by.  (Yes, 1-indexing is silly, '
+                        'but it\'s what most of the normal UNIXy utilities use.)')
+    parser.add_argument('-d', '--delimiter',
+                        metavar='D', default=' ', action='store',
+                        help='Each line to be sorted will be split on this delimiter.')
+
+    parser.add_argument('-r', '--reverse', '--descending', '--desc',
+                        action='store_true', #dest='reverse', const=True,
+                        help='Sort in descending order instead of in ascending order.')
+    parser.add_argument('--ascending', '--asc',
+                        action='store_const', dest='reverse', const=False,
+                        help='(Default.)  Sort in ascending order instead of in descending order.')
+    # parser.add_argument('-r', '--reverse',
+    #                     action='store_true',
+    #                     help='Sort in descending order instead of in ascending order.')
+
+    parser.add_argument('--auto', '--auto-type',
+                        action='store_const', const='auto', dest='key_type',
+                        help='(Default.)  If all values in the given column are integers or floats, '
+                        'then sort as that type.  Otherwise, sort as alphanumeric strings.)')
+    parser.add_argument('-i', '--integer', '--int',
+                        action='store_const', const='int', dest='key_type')
+    parser.add_argument('-f', '--float',
+                        action='store_const', const='float', dest='key_type')
+    parser.add_argument('-a', '--alphanumeric',
+                        action='store_const', const='alpha', dest='key_type')
+
+    parser.add_argument('--help',
+                        action='store_true')
+    parser.add_argument('-k', '--show-keys',
+                        action='store_true',
+                        help='Print information about the keys and how they are being used.  (For '
+                        'quick command-debugging purposes.)')
+
+    return parser
+
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if args.help:
+        parser.print_help()
+        sys.exit(0)
+
+    print(ksort(sys.stdin.read(), args), end='')
+
+if __name__ == '__main__':
+    main()

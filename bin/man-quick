@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# http://chrispoole.com/article/quick-man-page-lookup/
+
+
+gman () {
+    3=${3:-'0'}
+    man -- $1 | col -bx | if [[ $2 == "" ]]; then
+        grep -Em2 -- "^ +$1"
+    else
+        if [[ $3 -lt 0 ]]; then
+            grep -C${3#-} -- $2
+        else
+            grep -A$3 -- $2
+        fi | more
+    fi
+}
+
+gman "$@"

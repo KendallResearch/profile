@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# The 't' here is the last letter in 'git'
+ARG=`echo $1 | sed -e 's/^t//'`
+shift 1 # $
+
+echo "Warning: correcting 'gi t$ARG' to 'git $ARG'..."
+git $ARG "$@"

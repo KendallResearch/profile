@@ -1,0 +1,219 @@
+[Added Associations]
+# Also allow VLC to open video inside RARs!
+# (Makes it appear in the "open with..." menu)
+application/x-rar=vlc.desktop;
+
+[Default Applications]
+
+# These .desktop files live in /usr/share/applications
+# but they can also be placed in this directory.
+
+# Basic desktop env
+inode/directory=Thunar-folder-handler.desktop
+text/richtext=abiword.desktop
+text/plain=gedit.desktop
+
+# "productivity" 
+text/calendar=evolution.desktop
+x-scheme-handler/mailto=chrome.desktop
+
+# Web
+x-scheme-handler/http=google-chrome.desktop
+x-scheme-handler/https=google-chrome.desktop
+text/xml=google-chrome.desktop
+text/htm=google-chrome.desktop
+text/html=google-chrome.desktop
+application/xhtml+xml=google-chrome.desktop
+x-scheme-handler/http=google-chrome.desktop
+x-scheme-handler/https=google-chrome.desktop
+x-scheme-handler/about=google-chrome.desktop
+x-scheme-handler/unknown=google-chrome.desktop
+
+# TODO: added these based on some other guy's mimeapps.list
+# in what order are these things checked?
+application/x-extension-htm=chrome.desktop
+application/x-extension-html=chrome.desktop
+
+# # Package management
+# x-scheme-handler/apt=ubuntu-software-center.desktop
+# application/x-deb=ubuntu-software-center.desktop
+# application/x-debian-package=ubuntu-software-center.desktop
+
+# PDFs and etc.
+application/pdf=evince.desktop
+application/postscript=evince.desktop
+application/x-cbr=evince.desktop
+application/x-cbz=evince.desktop
+application/x-gzpostscript=evince.desktop
+
+# Misc not really "source code"
+text/x-chdr=gedit.desktop
+text/x-csrc=gedit.desktop
+text/x-dtd=gedit.desktop
+text/mathml=gedit.desktop
+text/x-sql=gedit.desktop
+text/x-matlab=gedit.desktop
+
+# Source code
+text/x-java=emacs24.desktop
+text/x-python=emacs24.desktop
+application/x-perl=emacs24.desktop
+application/x-sh=emacs24.desktop
+application/x-lua=emacs24.desktop
+text/x-sh=emacs24.desktop
+text/x-lua=emacs24.desktop
+
+# Archives
+# default is "file-roller.desktop"
+# alternatives are "squeeze", "xarchiver", etc.
+application/x-java-archive=xarchiver.desktop
+application/x-zip=xarchiver.desktop
+application/x-zoo=xarchiver.desktop
+application/zip=xarchiver.desktop
+multipart/x-zip=xarchiver.desktop
+application/x-ear=xarchiver.desktop
+application/x-gtar=xarchiver.desktop
+application/x-gzip=xarchiver.desktop
+application/x-jar=xarchiver.desktop
+application/x-lha=xarchiver.desktop
+application/x-lhz=xarchiver.desktop
+application/x-lzop=xarchiver.desktop
+application/x-rar-compressed=xarchiver.desktop
+application/x-rar=xarchiver.desktop
+application/x-rpm=xarchiver.desktop
+application/x-sc=libreoffice-calc.desktop
+application/x-sylk=libreoffice-calc.desktop
+application/x-tar=xarchiver.desktop
+application/x-war=xarchiver.desktop
+application/x-zip-compressed=xarchiver.desktop
+application/x-ar=xarchiver.desktop
+application/x-arj=xarchiver.desktop
+application/x-bzip-compressed-tar=xarchiver.desktop
+application/x-bzip=xarchiver.desktop
+application/x-compressed-tar=xarchiver.desktop
+application/x-compress=xarchiver.desktop
+
+# Photos, image-editing, etc.
+x-content/image-dcf=shotwell.desktop
+x-content/image-picturecd=shotwell.desktop
+image/vnd.rn-realpix=totem.desktop
+image/x-psd=gimp.desktop
+
+# Images (the normal kind)
+image/bmp=ristretto.desktop
+image/gif=ristretto.desktop
+image/jpeg=ristretto.desktop
+image/jpg=ristretto.desktop
+image/pjpeg=ristretto.desktop
+image/png=ristretto.desktop
+image/svg+xml=ristretto.desktop
+image/tiff=ristretto.desktop
+image/x-bmp=ristretto.desktop
+image/x-gray=ristretto.desktop
+image/x-icb=ristretto.desktop
+image/x-ico=ristretto.desktop
+image/x-png=ristretto.desktop
+image/x-portable-anymap=ristretto.desktop
+image/x-portable-bitmap=ristretto.desktop
+image/x-portable-graymap=ristretto.desktop
+image/x-portable-pixmap=ristretto.desktop
+image/x-xbitmap=ristretto.desktop
+image/x-xpixmap=ristretto.desktop
+
+# Audio and video
+application/ram=vlc.desktop
+application/x-extension-m4a=vlc.desktop
+application/x-extension-mp4=vlc.desktop
+x-content/audio-cdda=vlc-device.desktop
+x-content/audio-dvd=vlc-audiocd.desktop
+x-content/audio-player=vlc-device.desktop
+application/ogg=vlc.desktop
+application/vnd.rn-realmedia=vlc.desktop
+video/3gpp=vlc.desktop
+video/dv=vlc.desktop
+video/fli=vlc.desktop
+video/flv=vlc.desktop
+video/mp2t=vlc.desktop
+video/mp4=vlc.desktop
+video/mp4v-es=vlc.desktop
+video/mpeg=vlc.desktop
+video/msvideo=vlc.desktop
+video/ogg=vlc.desktop
+video/quicktime=vlc.desktop
+video/vivo=vlc.desktop
+video/vnd.divx=vlc.desktop
+video/vnd.rn-realvideo=vlc.desktop
+video/vnd.vivo=vlc.desktop
+video/webm=vlc.desktop
+video/x-anim=vlc.desktop
+video/x-avi=vlc.desktop
+video/x-flc=vlc.desktop
+video/x-fli=vlc.desktop
+video/x-flic=vlc.desktop
+video/x-flv=vlc.desktop
+video/x-m4v=vlc.desktop
+video/x-matroska=vlc.desktop
+video/x-mpeg=vlc.desktop
+video/x-ms-asf=vlc.desktop
+video/x-ms-asx=vlc.desktop
+video/x-msvideo=vlc.desktop
+video/x-ms-wm=vlc.desktop
+video/x-ms-wmv=vlc.desktop
+video/x-ms-wmx=vlc.desktop
+video/x-ms-wvx=vlc.desktop
+video/x-nsv=vlc.desktop
+video/x-ogm+ogg=vlc.desktop
+video/x-theora+ogg=vlc.desktop
+video/x-vlc-stream=vlc.desktop
+x-content/video-dvd=vlc.desktop
+x-content/video-vcd=vlc.desktop
+x-content/video-svcd=vlc.desktop
+audio/3gpp=vlc.desktop
+audio/ac3=vlc.desktop
+audio/AMR=vlc.desktop
+audio/AMR-WB=vlc.desktop
+audio/basic=vlc.desktop
+audio/flac=vlc.desktop
+audio/midi=vlc.desktop
+audio/mp4=vlc.desktop
+audio/mpeg=vlc.desktop
+audio/mpegurl=vlc.desktop
+audio/ogg=vlc.desktop
+audio/prs.sid=vlc.desktop
+audio/vnd.rn-realaudio=vlc.desktop
+audio/x-ape=vlc.desktop
+audio/x-flac=vlc.desktop
+audio/x-gsm=vlc.desktop
+audio/x-it=vlc.desktop
+audio/x-m4a=vlc.desktop
+audio/x-matroska=vlc.desktop
+audio/x-mod=vlc.desktop
+audio/x-mp3=vlc.desktop
+audio/x-mpeg=vlc.desktop
+audio/x-mpegurl=vlc.desktop
+audio/x-ms-asf=vlc.desktop
+audio/x-ms-asx=vlc.desktop
+audio/x-ms-wax=vlc.desktop
+audio/x-ms-wma=vlc.desktop
+audio/x-musepack=vlc.desktop
+audio/x-pn-aiff=vlc.desktop
+audio/x-pn-au=vlc.desktop
+audio/x-pn-realaudio=vlc.desktop
+audio/x-pn-realaudio-plugin=vlc.desktop
+audio/x-pn-wav=vlc.desktop
+audio/x-pn-windows-acm=vlc.desktop
+audio/x-realaudio=vlc.desktop
+audio/x-real-audio=vlc.desktop
+audio/x-sbc=vlc.desktop
+audio/x-scpls=vlc.desktop
+audio/x-speex=vlc.desktop
+audio/x-tta=vlc.desktop
+audio/x-wav=vlc.desktop
+audio/x-wavpack=vlc.desktop
+audio/x-vorbis=vlc.desktop
+audio/x-vorbis+ogg=vlc.desktop
+audio/x-xm=vlc.desktop
+application/x-flac=vlc.desktop
+misc/ultravox=vlc.desktop
+application/x-ogg=vlc.desktop
+application/x-shockwave-flash=vlc.desktop

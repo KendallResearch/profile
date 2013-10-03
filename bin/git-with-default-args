@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Get this script's path, per http://stackoverflow.com/questions/4774054/reliable-way-for-a-bash-script-to-get-the-full-path-to-itself.
+# Reminds me how much I hate bash... well, most of the time.
+pushd `dirname $0` > /dev/null
+SCRIPT_DIR=`pwd`
+popd > /dev/null
+
+SCRIPT_PATH=$SCRIPT_DIR/`basename $0`
+#echo $SCRIPT_PATH
+
+# Find the real git's path (the first one in the path that isn't us).
+# TODO: This does NOT like symlinks.
+#WHICH_NEXT=`which -a git | grep -v "$SCRIPT_PATH" | head -n 1`
+WHICH_NEXT='/usr/bin/git'
+
+cmd=$1
+shift 1
+
+# Structure/idea from here:
+# http://stackoverflow.com/questions/2500586/setting-git-default-flags-on-commands
+# Many of these setups from here (and there are other cool things there):
+# http://mislav.uniqpath.com/2010/07/git-tips/
+
+
+# N.B.: using "$cmd" instead of $cmd prevents errors if $cmd is the empty string (e.g. someone just
+#     runs `git`).
+
+#echo "X${cmd}X"
+if [ "$cmd" == "--no-default-args" ]; then
+    defaultargs=""
+    cmd=""  # don't pass --no-default-args to git
+elif [ "$cmd" == "--show-default-args" ]; then
+    cmd=$1
+    shift 1
+    defaultargs=`$WHICH_NEXT config --global defaultargs.${cmd}` 2> /dev/null
+    echo "${WHICH_NEXT} ${cmd} ${defaultargs} $@"
+    exit 0
+elif [ -n "$cmd" ]; then
+    # Super-important, obviously, that we not call 'git' here---otherwise, we'll just recursively
+    # call ourselves until the end of time!
+    defaultargs=`$WHICH_NEXT config --global defaultargs.${cmd}`
+else
+    defaultargs=""
+fi
+
+
+#echo "Running: $WHICH_NEXT $cmd $defaultargs $@"
+#exit 1
+
+
+$WHICH_NEXT $cmd $defaultargs "$@"

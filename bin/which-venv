@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import os.path
+
+def is_venv(path):
+    """Returns True iff the current directory is the base of a virtual
+    environment."""
+    return os.path.exists(os.path.join(path, 'bin/activate'))
+
+def which_venv(path):
+    """Returns the base path of the virtual environment that the
+    argument path is inside, or None if it is not inside a virtual
+    environment."""
+    if is_venv(path):
+        return path
+    if path == '/':
+        return None
+    return which_venv(os.path.split(path)[0])
+
+if __name__ == '__main__':
+    import sys
+
+    if 1 == len(sys.argv):
+        path = os.path.abspath('.')
+    else:
+        path = os.path.normpath(os.path.expanduser(sys.argv[1]))
+
+    venv = which_venv(path)
+    if venv is None:
+        sys.exit(1)
+    print venv
+    sys.exit(0)

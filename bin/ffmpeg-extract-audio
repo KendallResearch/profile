@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+FFMPEG_AVCONV=0
+
+function ffmpeg-extract-audio () {
+    if [[ $# != 4 ]]; then
+        echo "Usage: $FUNCNAME input.mkv output.aac"
+        exit 2
+    fi
+
+    local OUTPUT="${!#}"
+    local INPUT="$1"
+    local START_TIME="$2"
+    local DURATION="$3"
+
+    if [[ "$DURATION" == "end" ]]; then
+        DURATION=""
+    else
+        DURATION="-t $DURATION"
+    fi
+    if [[ "$START_TIME" == "start" ]]; then
+        START_TIME=""
+    else
+        START_TIME="-ss $START_TIME"
+    fi
+
+    if [[ ! -f "$INPUT" ]]; then
+        echo "$FUNCNAME: input file '$INPUT' does not exist."
+        exit 3
+    fi
+    if [[ -f "$OUTPUT" ]]; then
+        echo "$FUNCNAME: output file '$OUTPUT' already exists."
+        #exit 4
+    fi
+
+    if [[ $FFMPEG_AVCONV != 0 ]]; then
+        echo "ffmpeg-clip: no support for ffmpeg-avconv."
+    else
+        local MAP_ARGS=""
+        for STREAM_NO in "${STREAMS[@]}"; do
+            MAP_ARGS="$MAP_ARGS -map 0:$STREAM_NO"
+        done
+
+        ffmpeg -i "$INPUT" $DURATION  "$OUTPUT"
+    fi
+}
+
+ffmpeg-extract-audio "$@"

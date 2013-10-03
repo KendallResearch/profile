@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+######################
+# http://hmarr.com/2010/jan/19/making-virtualenv-play-nice-with-git/
+
+# XXX: VENV_FILE used between upfind_dotfile and find_venv_name
+# XXX: ENV_NAME used between find_venv_name and others...
+
+function venvcd_info {
+    # echo "$1"
+    :
+}
+
+function venvcd_debug {
+    # echo "$1"
+    :
+}
+
+function venvcd_trace {
+    # echo "$1"
+    :
+}
+
+# function upfind_dotfile {
+#     venvcd_trace "venv_cd: Starting upfind_dotfile."
+#     unset VENV_FILE
+#     local UPFIND_DIR="$PWD"
+#     while [[ "$UPFIND_DIR" != "/" ]]; do
+#         if [ -f "$UPFIND_DIR/.venv" ]; then
+#             VENV_FILE="$UPFIND_DIR/.venv"
+#             break
+#         fi
+#         UPFIND_DIR=`dirname "$UPFIND_DIR"`
+#     done
+#     venvcd_trace "venv_cd: Ending upfind_dotfile."
+# }
+
+function upfind_dotfile {  # $1
+    #venvcd_trace "venv_cd: Starting upfind_dotfile."
+    #unset VENV_FILE
+    local FOUND_DOTFILE=""
+    local UPFIND_DIR="$PWD"
+    while [[ "$UPFIND_DIR" != "/" ]]; do
+        if [ -f "$UPFIND_DIR/$1" ]; then
+            FOUND_DOTFILE="$UPFIND_DIR/$1"
+            break
+        fi
+        UPFIND_DIR=`dirname "$UPFIND_DIR"`
+    done
+    #venvcd_trace "venv_cd: Ending upfind_dotfile."
+    echo "$FOUND_DOTFILE"
+}
+
+# Sets ENV_NAME to path of target virtualenv.
+function find_venv_name {  
+    venvcd_trace "venv_cd: Starting find_venv_name."
+    unset ENV_NAME
+
+    VENV_FILE=$(upfind_dotfile ".venv")
+    if [ -f "$VENV_FILE" ]; then
+        ENV_NAME=`cat "$VENV_FILE"`
+    fi
+
+    local GIT_DIR=`git rev-parse --show-toplevel 2> /dev/null`
+    if [ -z "$ENV_NAME" ]; then
+        if [ -n "$GIT_DIR" ]; then
+            ENV_NAME=`basename "$GIT_DIR"`
+            ENV_NAME="$WORKON_HOME/$ENV_NAME"
+            if [ ! -e "$ENV_NAME/bin/activate" ]; then  # trying $ENV_NAME based on repo name, but no luck
+                unset ENV_NAME
+            fi
+        fi
+    fi
+
+    if [ -n "$ENV_NAME" ]; then
+        ENV_NAME="$WORKON_HOME/$ENV_NAME"
+    fi
+
+    unset VENV_FILE  # XXX: 
+    venvcd_trace "venv_cd: Ending find_venv_name."
+}
+
+function workon_cwd_switch {  # switch to the virtualenv at $ENV_NAME (or deactivate if $ENV_NAME is unset)
+    venvcd_trace "venv_cd: Starting workon_cwd_switch."
+
+    if [ -z "$ENV_NAME" ]; then
+        if [ -n "$VIRTUAL_ENV" ]; then # echo "auto-active; target is none; deactivate"
+            venvcd_info "venv_cd: Deactivating automatically-activated virtualenv \"$VIRTUAL_ENV\"."
+            deactivate && unset CD_VIRTUAL_ENV
+            venvcd_debug "venv_cd: Done."
+        fi
+    elif [ "$ENV_NAME" != "$VIRTUAL_ENV" ]; then  # target mismatches current; activate
+        if [ -e "$ENV_NAME/bin/activate" ]; then
+            # Also covers the case of switching from one automatically-activated virtualenv to another.
+            venvcd_info "venv_cd: Automatically activating virtualenv \"$ENV_NAME\"."
+            workon $(basename $ENV_NAME) && export CD_VIRTUAL_ENV="$ENV_NAME"
+            venvcd_debug "venv_cd: Done."
+        elif [ -n "$VIRTUAL_ENV" ]; then
+            # There's an ENV_NAME we're supposed to be in; it's not the current env; and there is a current env.
+            echo "Virtualenv $ENV_NAME does not appear to be valid.  Deactivating." >&2
+            deactivate && unset CD_VIRTUAL_ENV
+            venvcd_debug "venv_cd: Done."
+        fi
+    fi
+
+    venvcd_trace "venv_cd: Ending workon_cwd_switch."
+}
+
+function workon_cwd {
+    if [[ -n "$KK_IN_WORKON_CWD" ]]; then
+        # If virtualenvwrapper itself or a hook issues 'cd', we don't want a bunch of recursive
+        # calls (or even infinite recursion).
+        venvcd_trace "venv_cd: Skipping workon_cwd since we are in the midst of another call to it."
+        return
+    fi
+    venvcd_info "venv_cd: Starting workon_cwd."
+
+    export KK_IN_WORKON_CWD="yes"
+
+    find_venv_name
+
+    if [ -n "$CD_VIRTUAL_ENV" ]; then  # We have automatically activated a virtualenv.
+        if [ -n "$VIRTUAL_ENV" ]; then  # auto, OK, unless mismatch (then switch or deactivate)
+            workon_cwd_switch
+        else  # manually deactivated
+            venvcd_debug "venv_cd: Automatically-activacted virtualenv was manually deactivated."
+            if [ "$ENV_NAME" != "$VIRTUAL_ENV" ]; then
+                venvcd_info "venv_cd: We would have automatically-deactivated that virtualenv; resetting."
+                unset CD_VIRTUAL_ENV
+            fi
+        fi
+    else
+        if [ -n "$VIRTUAL_ENV" ]; then  # manually activated
+            venvcd_debug "venv_cd: The current virtualenv was manually activated."
+            :
+        else  # check to see if we should auto activate
+            venvcd_debug "venv_cd: Checking to see if we should automatically activate a virtualenv."
+            workon_cwd_switch
+        fi
+    fi
+
+    unset VENV_FILE && unset ENV_NAME
+    unset KK_IN_WORKON_CWD
+    venvcd_trace "venv_cd: Ending workon_cwd."
+}
+
+function venv_cd {
+    builtin cd "$@" && workon_cwd
+
+    # # using `builtin cd` prevents infinite loops
+    # venvcd_trace "venv_cd: Starting venv_cd."
+    # builtin cd "$@"
+    # venvcd_trace "venv_cd: Back from builtin cd; calling workon_cwd."
+    # workon_cwd
+    # venvcd_trace "venv_cd: Ending venv_cd."
+}
+
+alias cd="venv_cd"

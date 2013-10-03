@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+# must go /after/ .bashfn (because of git functionality)
+
+# NTS: Check out github.com/Lokaltog/powerline
+
+
+#############
+## In order for this to work, these lines need to be added to /etc/sshd_config (Mac OS X) or
+## /etc/ssh/sshd_config (Ubuntu).
+#############
+# # Preserve SSH information; used by my prompt.
+# Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_AUTH_SOCK"
+# # For emacsclient.
+# Defaults env_keep += "ALTERNATIVE_EDITOR"
+#############
+
+function kk_prompt_user_host() {
+    local KK_PROMPT_HOST='\h'
+    [[ -z "$SSH_CLIENT" ]] && KK_PROMPT_HOST=""
+    local KK_PROMPT_USER='\u'
+    [[ "$USER" == "kelleyk" || "$USER" == "root" ]] && KK_PROMPT_USER=""
+    local KK_PROMPT_SEP="@"
+    [[ -z "$KK_PROMPT_USER" || -z "$KK_PROMPT_HOST" ]] && KK_PROMPT_SEP=""
+    local KK_PROMPT_DELIM=":"
+    [[ -z "$KK_PROMPT_USER" && -z "$KK_PROMPT_HOST" ]] && KK_PROMPT_DELIM=""
+    echo "$KK_PROMPT_USER$KK_PROMPT_SEP$KK_PROMPT_HOST$KK_PROMPT_DELIM"
+}
+
+# This replaces '\j' but is blank instead of showing 0 when there are no jobs.
+#function kk_bg_jobs() {
+#    local JOB_QTY=`jobs | wc -l | tr -d ' '`
+#    [[ "$JOB_QTY" != 0 ]] && echo "$JOB_QTY "
+#}
+function kk_bg_jobs() {
+  :
+}
+
+function kk_define_prompt() {
+    #KK_SOLCOLOR_BLACK=$'\e[1;30m'
+    KK_SOLCOLOR_RED=$'\e[1;31m'
+    #KK_SOLCOLOR_GREEN=$'\e[1;32m'
+    #KK_SOLCOLOR_YELLOW=$'\e[1;33m'
+
+    COLOR_PROMPT=$'\e[0;37m'
+    COLOR_NORMAL=$'\e[m'
+    COLOR_VCS=$'\e[0;35m'     # magenta/purple
+
+    # Don't wipe out what 'z' puts in the $PROMPT_COMMAND, but be sure to go first so we can get "$?"!
+    PROMPT_COMMAND='if [[ $? = "0" ]]; then export KK_PROMPT_RET_COLOR="$COLOR_PROMPT"; else export KK_PROMPT_RET_COLOR="$KK_SOLCOLOR_RED"; fi; '"$PROMPT_COMMAND"
+
+    # show history number: [\!]
+    PS1='\[${COLOR_PROMPT}\]$(kk_bg_jobs)\[${COLOR_NORMAL}\]\[${COLOR_PROMPT}\]'"$(kk_prompt_user_host)"'\W\[${COLOR_VCS}\]$(parse_git_branch)\[${KK_PROMPT_RET_COLOR}\]\$\[${COLOR_NORMAL}\] '
+}
+
+kk_define_prompt

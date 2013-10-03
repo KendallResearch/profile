@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#
+# Update, upgrade, and autoremove.
+#
+# @platform: ubuntu
+
+source ~/profile/scripts/shell_library.sh
+prompt_for_sudo
+
+sudo apt-get update && sudo apt-get dist-upgrade -y && sudo apt-get autoremove -y

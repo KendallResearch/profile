@@ -1,0 +1,134 @@
+#!/usr/bin/env python
+
+import os
+import os.path
+
+import psutil
+import prettytable
+
+try:
+    from solid.util.inspectbin import which
+    from solid.path import Path
+except ImportError:
+    which = None
+
+
+def get_binary_path(process):
+    try:
+        return process.exe
+    except psutil.AccessDenied:
+        #print('accessdenied!')
+        # XXX: maybe check that this is an existant absolute path?
+        return process.cmdline[0].split()[0]
+
+def format_binary_path(path):
+    """If the given path is in the user's PATH, return only the binary name; otherwise, return the full path.
+
+    If solid.util is not present, always returns the full path.
+    """
+
+    if which is None:
+        return path
+
+    path = Path(path)
+    binary_name = path.name
+    which_path = which(binary_name)
+    if which_path == path:
+        return binary_name
+    return path
+
+def human_readable(magnitude, unit='B'):
+    STEP = 1024.0
+    PREFIXES = ['', 'ki', 'Mi', 'Gi', 'Ti']
+
+    for prefix in PREFIXES:
+        if magnitude < STEP:
+            break
+        magnitude /= STEP
+    return '{:.2f} {}{}'.format(magnitude, prefix, unit)
+
+
+class ApplicationInfo(object):
+    def __init__(self, binary_path, real_uid):
+        self.binary_path = binary_path
+        self.real_uid = real_uid
+        self.processes = {}
+
+    def add_process(self, process):
+        info = process.as_dict()
+        #import pdb; pdb.set_trace()
+        self.processes[process.pid] = info
+
+    @property
+    def total_rss(self):
+        """Total amount of resident-set memory used."""
+        return sum(info['ext_memory_info'].rss for info in self.processes.values())
+
+    @property
+    def process_count(self):
+        return len(self.processes)
+
+    @property
+    def thread_count(self):
+        return sum(len(info['threads']) for info in self.processes.values())
+
+    @property
+    def total_cpu_times(self):
+        return psutil.cputimes(
+            user=sum(info['cpu_times'].user for info in self.processes.values()),
+            system=sum(info['cpu_times'].system for info in self.processes.values()),
+            )
+
+
+def summarize(target_uid=None):
+    apps = {}
+
+    for process in psutil.process_iter():
+        # uids is a 3-tuple of (real, effective, saved)
+        real_uid = process.uids[0]
+        if target_uid is not None and real_uid != target_uid:
+            continue
+
+        try:
+            #print('looking at process {} owned by {}'.format(process.pid, real_uid))
+            #print(process.as_dict())
+            bin_path = get_binary_path(process)
+            #print('looks like it has a bin path of {}'.format(bin_path))
+
+            ps_key = (bin_path, real_uid)
+
+            apps.setdefault(ps_key, ApplicationInfo(bin_path, process.uids[0]))
+            apps[ps_key].add_process(process)
+
+        except Exception:
+            raise
+
+    results = list(apps.values())
+    results.sort(key=lambda info: -info.total_rss)
+
+    table = prettytable.PrettyTable(('Binary', 'Processes', 'Threads', 'RSS'))
+    table.align = 'r'
+    table.align['Binary'] = 'l'
+    table.border = False
+
+    for info in results:
+        table.add_row((
+            format_binary_path(info.binary_path),
+            info.thread_count, info.process_count,
+            human_readable(info.total_rss),
+            ))
+
+    print(table)
+    # for info in results:
+    #     print('{}\n\thas {} thread(s) in {} process(es)\n\ttotal RSS: {} or {}'.format(
+    #         format_binary_path(info.binary_path),
+    #         info.thread_count, info.process_count,
+    #         info.total_rss,            human_readable(info.total_rss),
+    #         ))
+
+
+if __name__ == '__main__':
+    from solid.testkit import install_pdb_hook
+    install_pdb_hook()
+
+    summarize(target_uid=os.getuid())

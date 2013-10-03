@@ -1,0 +1,5 @@
+
+# This file must be executable
+
+# Fix sorting so that underscores, etc. are respected
+export LC_COLLATE=C

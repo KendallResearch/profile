@@ -1,0 +1,39 @@
+
+set editing-mode emacs
+
+# Allow UTF-8 input and output, instead of showing stuff like $'\0123\0456'
+set input-meta on
+set output-meta on
+set convert-meta off
+
+# [isn't this the default? @KK]
+# Use Alt/Meta + Delete to delete the preceding word
+"\e[3;3~": kill-word
+
+# 'C-x q' to quote current or previous word
+"\C-xq": "\eb\"\ef\""
+
+### Autocomplete
+# f<tab> finds `Foo` and `foo`.
+set completion-ignore-case on
+# Underscore and hyphen treated equivalently.
+set completion-map-case on
+# List all matches in case multiple possible completions are possible
+set show-all-if-ambiguous on
+# Show all autocomplete results at once
+set page-completions off
+# Do not autocomplete hidden files unless the pattern explicitly begins with a dot
+set match-hidden-files off
+# Show extra file information when completing, like `ls -F` does
+set visible-stats on
+# 
+set mark-directories on
+# Immediately add a trailing slash when autocompleting symlinks to directories
+set mark-symlinked-directories on
+
+# Be more intelligent when autocompleting by also looking at the text
+# after the cursor. For example, when the current line is "cd
+# ~/src/mozil", and the cursor is on the "z", pressing Tab will not
+# autocomplete it to "cd ~/src/mozillail", but to "cd
+# ~/src/mozilla". (This is supported by the Readline used by Bash 4.)
+set skip-completed-text on

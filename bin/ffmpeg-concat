@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Per http://ffmpeg.org/faq.html#How-can-I-concatenate-video-files_003f this performs a
+# demuxer-level concatenation (so, no reencoding).
+# See http://www.ffmpeg.org/ffmpeg-formats.html#concat for details.
+
+FFMPEG_AVCONV=0
+
+TMP_NAME=".tmp-ffmpeg-concat"
+
+function ffmpeg-concat () {
+    echo $#
+
+    if [[ $# -lt 3 ]]; then
+        echo "Usage: $FUNCNAME input0 [input1 [input2 ...]] output.mkv"
+        exit 2
+    fi
+
+    local OUTPUT="${!#}"
+    local INPUTS=(${@:1:$(($#-1))})  # remove last (start at #1 and return n-1 args)
+
+    echo "output: $OUTPUT"
+    echo "inputs: $INPUTS"
+
+    if [[ -f "$TMP_NAME" ]]; then
+        echo "$FUNCNAME: Temporary file already exists! Oops."
+        return 2
+        exit 2
+    fi
+
+    # Truncate file and then write input names to it.
+    echo -n "" > "$TMP_NAME"  # can't hurt even though we are insisting this file not exist
+    for INPUT_NAME in "${INPUTS[@]}"; do
+        echo $INPUT_NAME
+        echo "file '$INPUT_NAME'" >> $TMP_NAME
+    done
+    trap "rm $TMP_NAME" EXIT  # clean up!
+
+    # Concatenate!
+    ffmpeg -f concat -i $TMP_NAME -c copy $OUTPUT
+}
+
+ffmpeg-concat "$@"

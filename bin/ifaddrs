@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#
+# XXX: Unclear what, exactly, the output of this is supposed to be.  The Darwin version probably needs some work.
+#
+# @platform: ubuntu, darwin
+
+if [ `uname` == 'Darwin' ]; then
+    /sbin/ifconfig |grep -B1 "inet" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "ether" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 "\t" $3 }'    
+else
+    /sbin/ifconfig |grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 "\t" $3 }'
+fi

@@ -1,0 +1,195 @@
+#!/usr/bin/env python2.7
+#! -*- mode: python; -*-
+
+import sys
+import json
+import types
+import shutil
+import argparse
+import os
+import os.path
+
+#### older todo items:
+
+# TODO: files with same contents should be transparently brought under
+# management
+
+# TODO: if the links have the same "realpath" (eventual absolute target path) but e.g. the existing
+# link is not relative, should remove and recreate it to "tidy up".
+
+# TODO: should have command that says "bring this (this-machine-only)
+# dotfile under management!"
+
+# TODO: should be able to specify per-OS or per-machine specific
+# stuff.
+
+# Key is name in home directory (path_name); value is name in dotfiles
+# directory (target_name).  If target_name is None, it is
+# automatically filled in by stripping off the dot and adding the
+# prefix specified below.
+
+##### newer todo items:
+
+# - .git-meld.pl moving to bin/ (or scripts/?)
+# -  '.config/user-dirs.dirs': None,
+# -  '.config/sublime-text-2/Packages/User': None,
+# TODO: XXX: On MacOS, the user fonts dir is ~/Library/Fonts/; need to symlink that to dotfiles/_fonts.
+
+
+class SyncDotfilesApplication(object):
+    def __init__(self):
+        pass
+
+    def _load_config(self):
+        with open(os.path.expanduser('~/profile/config/dotfiles.json'), 'rb') as f:
+            self._config = json.loads(f.read())
+
+    def build_parser(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--quiet', '-q', action='store_true',
+                            help='Intended for use on login; will only speak up if something is out of whack.')
+        parser.add_argument('--debug', '-d', action='store_true')
+        parser.add_argument('--test', '-t', '--dryrun', action='store_true')
+        parser.add_argument('--force', '-f', action='store_true')
+        parser.add_argument('--verbose', '-v', action='store_true')
+        parser.add_argument('--homedir', default='~',
+                            help='Where symlinks will be created.')
+        parser.add_argument('--dotfiledir', default='profile/dotfiles',
+                            help='Where dotfiles can be found.')
+        return parser
+
+    def _process_symlink(self, target, path): #aka target_path, dotfile_path
+        """Returns (status, result) 2-tuples."""
+
+        if not os.path.lexists(target):
+            self._error = True
+            print('\tmissing target: {}'.format(target))
+            return ('DOTFILE NOT FOUND', None)
+
+        if not os.path.lexists(path):
+            self._changed = True
+            if self.args.test:
+                return ('missing', None)
+            else:
+                create_dotfile_link(target, path)
+                return ('missing', 'synced')
+
+        existing_realpath = os.path.realpath(path)
+        if existing_realpath != os.path.realpath(target):
+            if self.args.debug:
+                print('\tCurrent target path: {}'.format(existing_realpath))
+            status = 'unmanaged' if os.path.lexists(existing_realpath) else 'broken'
+
+            if self.args.verbose:
+                pass  # XXX: TODO: ...
+
+            if status != 'broken' and not self.args.force:
+                return (status, 'skipping')
+            self._changed = True
+            if self.args.test:
+                return (status, None)
+
+            #import pdb; pdb.set_trace()
+            remove_any(path)
+            create_dotfile_link(target, path)
+            return (status, 'removed; synced')
+
+        return ('ok', None)
+
+    def run(self):
+
+        parser = self.build_parser()
+        self.args = parser.parse_args()
+
+        self._load_config()
+
+        self._homedir = os.path.abspath(os.path.expanduser(self.args.homedir))
+
+        self._dotfiledir = os.path.expanduser(self._config['dotfile_path'])
+        if not self._dotfiledir.startswith('/'):
+            self._dotfiledir = os.path.join(self._homedir, self._dotfiledir)
+        self._dotfiledir = os.path.abspath(self._dotfiledir)
+
+        if self.args.debug:
+            print('Home:\t{}'.format(self._homedir))
+            print('Dotfiles:\t{}'.format(self._dotfiledir))
+            print('')
+
+        self._error = False
+        self._changed = False  # or, in test mode, "would have been changed"
+
+        prefix = self._config.get('dotfile_prefix', '.')
+
+        for dotfile_name, dotfile_config in sorted(self._config['links'].items()):
+            # N.B.: dotfile_name may be a relative path
+
+            dotfile_path = os.path.abspath(os.path.join(self._homedir, dotfile_name))
+
+            if isinstance(dotfile_config, (basestring, types.NoneType)):
+                target_path = dotfile_config
+            else:
+                target_path = dotfile_config.get('target')
+            if target_path is None:
+                target_path = prefix + dotfile_name.lstrip('.')
+            else:
+                target_path = os.path.expanduser(target_path)
+            target_path = os.path.abspath(os.path.join(self._dotfiledir, target_path))
+
+            if self.args.debug:
+                print('\tSymlink path:\t{}'.format(dotfile_path))
+                print('\tTarget path:\t{}'.format(target_path))
+
+            status, result = self._process_symlink(target_path, dotfile_path)
+
+            if (not self.args.quiet) or 'ok' != status:
+                if result is None:
+                    print('{: <50} -> {}'.format(dotfile_name, status))
+                else:
+                    print('{: <50} -> {} ... {}'.format(dotfile_name, status, result))
+
+        if self._error:
+            raise SystemExit(1)
+
+
+def remove_any(path):
+    if os.path.isdir(path) and not os.path.islink(path):
+        shutil.rmtree(path)
+    else:
+        os.unlink(path)
+
+
+# With inspiration from
+# https://github.com/jbernard/dotfiles/blob/develop/dotfiles/core.py
+
+def create_dotfile_link(target, path):
+    """Create a symlink from path to target.  Create a relative-path link if the target is within the user's home directory, or an absolute-path link if the target is not."""
+
+    # import pdb; pdb.set_trace()
+
+    if within_homedir(target):
+        rel_target = os.path.relpath(target, os.path.dirname(path))
+        #print('\tcreating relative link at {path} to {target} ({rel_target})'.format(**locals()))
+        target = rel_target
+
+    create_link(rel_target, path)
+
+def within_homedir(target, homedir=None):
+    # N.B.: The calls to normpath() deal with trailing-slash issues.
+    homedir = homedir or os.path.abspath(os.path.expanduser('~'))
+    result = os.path.normpath(os.path.commonprefix((homedir+'/', target)))
+    return result == os.path.normpath(homedir)
+
+def create_link(target, path):
+    """Creates a symlink from 'path' to 'target'."""
+
+    path_dir = os.path.dirname(path)
+    if not os.path.lexists(path_dir):
+        os.makedirs(path_dir)
+    os.symlink(target, path)
+
+
+def main():
+    SyncDotfilesApplication().run()
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+for NAME in $(brew list); do
+    if [[ -z `brew uses --installed ${NAME}` ]]; then
+        echo $NAME
+    fi
+done

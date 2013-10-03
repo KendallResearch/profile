@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# -*- mode: bash -*-
+
+case `uname -s` in
+    Darwin)
+        echo `system_profiler | grep 'Current Wireless Network' | cut -f 2 -d:`
+        ;;
+    FreeBSD)
+        IFACE=`netstat -rn | grep default | cut -c 65-`
+        echo `/sbin/ifconfig $IFACE | grep ssid | awk '{print $2}'`
+        ;;
+    *)
+        echo 'Unknown platform!'
+        ;;
+esac

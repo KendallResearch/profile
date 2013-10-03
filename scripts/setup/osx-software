@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Install an mpkg for all users:
+# ~$ sudo installer -pkg /Volumes/someapp/someapp.mpkg -target /
+# (Can use -target <username> to install for only one user.)
+
+###############################################################################
+# Drivers
+###############################################################################
+
+# Plugable USB 3.0 NIC (AX88179 chipset)
+# most recent drivers are direct from chipset maker:
+# - http://www.asix.com.tw/products.php?op=pItemdetail&PItemID=131;71;112
+# - http://www.asix.com.tw/FrootAttach/driver/AX88179_178A_Macintosh_10.6_to_10.8_Driver_v1.6.0_Binary_20130911.zip
+#   (as of 2013.09.18)

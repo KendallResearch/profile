@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+
+
+########################################
+## Dotfile management
+########################################
+
+# N.B. Can't use ~/ unless you run it through eval; easier to just use $HOME.
+DOTFILE_REPOS=("$HOME/.emacs.d" "$HOME/profile")
+
+# TODO: This doesn't test that there aren't changes we need to pull, but it should help with
+# divergent edits.
+function dotfiles-check-if-dirty () {
+    for DOTFILE_REPO in "${DOTFILE_REPOS[@]}"; do
+        # echo "Checking dotfile repository: $DOTFILE_REPO"
+        \pushd "$DOTFILE_REPO" > /dev/null
+        if [[ -n `parse_git_dirty` ]]; then
+            echo "Dotfile repository is dirty: $DOTFILE_REPO"
+        fi
+        \popd > /dev/null
+    done
+}
+
+function dotfiles-sync () {
+    for DOTFILE_REPO in "${DOTFILE_REPOS[@]}"; do
+        \pushd "$DOTFILE_REPO" > /dev/null
+        if [[ -n `parse_git_dirty` ]]; then
+            echo "Dotfile repository is dirty: $DOTFILE_REPO"
+        else
+            git sync
+        fi
+        \popd > /dev/null
+    done
+}
+
+alias e="emacs"
+alias esudo="sudoedit"  # same thing as 'sudo -e'
+
+alias rerc="source ~/.bashrc"
+alias e-rc="e ~/.bashrc"
+alias realias="source ~/profile/dotfiles/.bash_aliases"
+alias e-aliases="e ~/profile/dotfiles/.bash_aliases"
+
+alias e-syslog="e $SYSTEM_LOG"
+alias e-xlog="e /var/log/Xorg.0.log"
+alias e-esettings="e ~/.emacs.d/personal/kk-settings.el"
+
+########################################
+## Random utilities
+########################################
+
+extract () {
+    if [ -f $1 ] ; then
+        case $1 in
+            *.tar.bz2)   tar xvjf $1        ;;
+            *.tar.gz)    tar xvzf $1     ;;
+            *.bz2)       bunzip2 $1       ;;
+            *.rar)       unrar x $1     ;;
+            *.gz)        gunzip $1     ;;
+            *.tar)       tar xvf $1        ;;
+            *.tbz2)      tar xvjf $1      ;;
+            *.tgz)       tar xvzf $1       ;;
+            *.zip)       unzip $1     ;;
+            *.Z)         uncompress $1  ;;
+            *.7z)        7z x $1    ;;
+            *)           echo "'$1' cannot be extracted via >extract<" ;;
+        esac
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+
+tar-cJ () {
+    INPUT=$1
+    OUTPUT="${INPUT%/}.tar.xz"
+    if ! [ -e "$INPUT" ]; then
+        echo "Input file '$INPUT' does not exist; aborting."
+    elif [ -e "$OUTPUT" ]; then
+        echo "Output file '$OUTPUT' already exists; aborting."
+    else
+        tar -cJf "$OUTPUT" "$INPUT"
+    fi
+}
+
+# Directories must be +x (so that you can list their contents); files
+# should be -x.
+permissions-reset () {
+    DIR="$1"
+    : ${DIR:="."}
+
+    find "$DIR" -type d -exec chmod 0755 "{}" \;
+    find "$DIR" -type f -exec chmod 0644 "{}" \;
+}
+alias mine="sudo chown -R kelleyk:kelleyk"
+
+## XXX TODO: does this do anything?
+# nuke: remove even if
+nuke () {
+    resetperms $1 && rm -rf $1
+}
+
+# e.g. "git alias | highlight pull"
+highlight () {
+    sed -e "s/${1}/\x1b[7m&\x1b[0m/g"
+}
+
+# # Other toys I'm just playing with---
+# alias nocomment='grep -Ev '\''^(#|$)'\'''
+
+#############
+# listing and finding
+#############
+
+function ls-dirs () {
+    FIRST_ARG=${1-.}; shift
+    find "$FIRST_ARG" "$@" -mindepth 1 -maxdepth 1 -type d -printf "%f\n"
+}
+alias lsd="ls-dirs"
+
+function find-dirs () {
+    FIRST_ARG=${1-.}; shift
+    find "$FIRST_ARG" "$@" -mindepth 1 -type d -printf "%f\n"
+}
+alias lsdr="find-dirs"
+
+function ls-files () {
+    FIRST_ARG=${1-.}; shift
+    find "$FIRST_ARG" "$@" -mindepth 1 -maxdepth 1 -type f -printf "%f\n"
+}
+alias lsf="ls-files"
+
+function find-files () {
+    FIRST_ARG=${1-.}; shift
+    find "$FIRST_ARG" "$@" -mindepth 1 -type f -printf "%f\n"
+}
+alias lsfr="find-files"
+
+function find-file-extensions () {
+    local PREV_IFS="$IFS"
+    ifs-newline
+    for FILENAME in $(find . -type f); do echo "${FILENAME##*.}"; done | sort | uniq
+    export IFS="$PREV_IFS"
+}
+
+#############
+# find toys
+#############
+
+fls () {
+    find -iname "*$1*" -exec ls -h {} --color=always \;
+}
+
+#function find1 () { find "$@" -maxdepth 1; }
+#function findd () { find "$@" -type d; }
+#function findf () { find "$@" -type f; }
+#alias find1="find -maxdepth 1"
+#alias findd="find -type d"
+#alias findf="find -type f"
+#alias find1d="find -maxdepth 1 -type d"
+#alias find1f="find -maxdepth 1 -type f"
+
+#function fi1() { local fipaths="${*:2}"; echo "${fipaths:-.}"; find "${fipaths:-.}" -maxdepth 1 -iname "*$1*"; }
+#"${*:2:-.}"
+
+######################
+## git
+######################
+
+# Cobbled together from many places, including:
+# - http://stackoverflow.com/questions/2657935/checking-for-a-dirty-index-or-untracked-files-with-git
+
+# Returns "*" if the current git branch is dirty.
+function parse_git_dirty() {
+  # [[ $(git diff --shortstat 2> /dev/null | \tail -n1) != "" ]] && echo "*"
+  [[ `git diff-index --name-only HEAD -- 2> /dev/null` != "" ]] && echo -n "*" || echo -n ""
+
+  #     # This variant does not eat the nonzero return code if 'git diff-index' fails (e.g. because
+  #     # we're not in a repository).
+  #     # [[ `git diff-index --name-only HEAD -- 2> /dev/null` != "" ]] && echo "*"
+}
+
+# Returns the current git branch *with a leading space*; or the empty string if not in a repo.
+function parse_git_branch() {
+    git branch --no-color 2> /dev/null | \sed -e '/^[^*]/d' -e "s/* \(.*\)/ \1$(parse_git_dirty)/"
+}
+
+
+######################
+## Scratchpad
+######################
+
+
+# my 'grep' has '-iE --color=auto' already
+# These functions tail, cat, or tail-syslog (respectively); any additional arguments are used to
+# highlight.
+function tailg () {
+    if [[ $# == 0 ]]; then
+        grep "$(echo "$*" | tr -s ' ' '|')"
+    elif [[ $# > 1 ]]; then
+        tail -f "$1" | grep "$(echo "${*:2}" | tr -s ' ' '|')"
+    else
+        tail -f "$1"
+    fi
+}
+function catg () {
+    # my 'grep' has '-iE --color=auto' already
+    if [[ $# == 0 ]]; then
+        grep "$(echo "$*" | tr -s ' ' '|')"
+    elif [[ $# > 1 ]]; then
+        cat "$1" | grep "$(echo "${*:2}" | tr -s ' ' '|')"
+    else
+        cat "$1"
+    fi
+}
+function syslog () {
+    if [[ $# > 0 ]]; then
+        tail -f ${SYSTEM_LOG} | grep "$(echo "$*" | tr -s ' ' '|')"
+    else
+        tail -f ${SYSTEM_LOG}
+    fi
+}
+
+######################
+## apt
+######################
+
+function aptupdate-source () {
+    if [[ -z "$1" ]]; then
+        echo "Usage: aptupdate-source [source-name]"
+        return 1
+    fi
+    if [[ ! -f "/etc/apt/sources.list.d/$1.list" ]]; then
+        echo "No such source list: $1"
+        return 2
+    fi
+
+    sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/$1.list" \
+        -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
+}
+function _apt_source_lists() {
+    local cur
+    _init_completion || return
+
+    COMPREPLY=( $( find /etc/apt/sources.list.d/ -name "*$cur*.list" \
+        -exec basename {} \; 2> /dev/null ) )
+
+    # XXX: This is a hideous way to strip the ".list" extension.
+    for ((i=0; i < ${#COMPREPLY[@]}; i++)); do
+        COMPREPLY[$i]="${COMPREPLY[$i]%.*}"
+    done
+
+    return 0
+}
+complete -F _apt_source_lists aptupdate-source
+
+
+######################
+## Filesystem cleanup
+######################
+
+function trashfind () {
+    find . \( -iname "*~" -o -iname "*.pyc" -o -iname "#*#" -o -iname "Thumbs.db" \) -type f
+}
+function trashfind-rm () {
+    find . \( -iname "*~" -o -iname "*.pyc" -o -iname "#*#" -o -iname "Thumbs.db" \) -type f -exec rm "{}" \;
+}
+
+function emptyfind () {
+    find . -empty
+}
+function emptyfind-rm () {
+    find . -empty -type f -exec rm "{}" \;
+    find . -empty -type d -exec rmdir "{}" \;
+}
+
+######################
+## Shell tomfoolery
+######################
+
+export KK_VANILLA_IFS="$IFS"
+
+function ifs-reset () {
+    export IFS="$KK_VANILLA_IFS"
+}
+
+function ifs-newline () {
+    export IFS=$'\n'
+}
+
+######################
+## Misc
+######################
+
+# 'ls' on dirs, 'cat' on files
+function a () {
+    if [ -d "$1" ]; then
+        ls "$1"
+    elif [ -f "$1" ]; then
+        cat "$1"
+    fi
+}

@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+# # Show all the colors of the rainbow, should be run under bash
+# for FG in 30 31 32 33 34 35 36 37; do
+#     echo -en "\033[0m"
+#     echo -n "This is ${FG}"
+#     CTRL="\033[${FG}m"
+#     echo -en "${CTRL}"
+#     echo -n "This is FG ${FG}"
+#     echo -en "\033[0m"
+#     echo
+# done
+# # Reset
+
+echo "Bold, high-intensity, or bright colors are the same thing."
+echo "The normal terminal colors correspond to ASCII colors 0-7."""
+echo "Unless otherwise configured, high-intensity text is rendered using ASCII colors 8-15."
+echo "  This is a problem e.g. for Solarized, where 8-15 are used for background color shades."""
+echo "Bold, high-intensity, or bright colors are different terms for the same thing."
+
+function color_line {
+    NAME=$1
+    #SOLARIZED_NAME=$2
+    FG=$2
+    echo -en "\033[0m"
+    echo -n "Color ${FG} (\"${NAME}\"): "
+    CTRL="\033[${FG}m"
+    echo -en "${CTRL}"
+    echo -n " This is \"${NAME}\" (${FG})"
+    echo -en "\033[0m"
+    echo -en " and "
+    echo -en "\033[1;${FG}m"
+    echo -n "this is \"bold ${NAME}\" (1;${FG})"
+    echo -en "\033[0m"
+    echo
+}
+
+echo
+echo "* Standard terminal colors"
+color_line "black" 30
+color_line "red" 31
+color_line "green" 32
+color_line "yellow" 33
+color_line "blue" 34
+color_line "magenta/purple" 35
+color_line "cyan" 36
+color_line "white" 37
+color_line "default/white" 39
+
+
+function xterm256_color_line {
+    NAME="xterm256 $2"
+    FG=$2
+    echo -en "\033[0m"
+    echo -n "color ${FG}: "
+    CTRL="\033[38;5;${FG}m"
+    echo -en "${CTRL}"
+    echo -n " This is color 38;5;${FG}"
+    echo -en "\033[0m"
+
+    echo -en "\033[0m"
+    echo -en " and "
+    echo -en "\033[1;38;5;${FG}m"
+    echo -n "this is it in bold (1;38;5;${FG})"
+    echo -en "\033[0m"
+    echo
+}
+
+echo
+echo "* ANSI colors 0-15 (normal and high-intensity colors), printed using the 38;5; escape code"
+
+xterm256_color_line "black" 0
+xterm256_color_line "red" 1
+xterm256_color_line "yellow-green" 2
+xterm256_color_line "light-orange" 3
+xterm256_color_line "sky-blue" 4
+xterm256_color_line "magenta" 5
+xterm256_color_line "teal" 6
+xterm256_color_line "white" 7
+xterm256_color_line "(background/\"black\")" 8
+
+xterm256_color_line "burnt-orange" 9
+xterm256_color_line "grey 0 (darkest)" 10
+xterm256_color_line "grey 1" 11
+xterm256_color_line "grey 2" 12
+xterm256_color_line "purple/violet" 13
+xterm256_color_line "grey 3 (lightest)" 14
+xterm256_color_line "white" 15
+
+function solarized_color_line {
+    NAME=$1
+    FG=$2
+    echo -en "\033[0m"
+    echo -n "color ${FG} (should be ${NAME}): "
+    CTRL="\033[38;5;${FG}m"
+    echo -en "${CTRL}"
+    echo -n " This is color 38;5;${FG}"
+    echo -en "\033[0m"
+
+    echo -en "\033[0m"
+    echo -en " and "
+    echo -en "\033[1;38;5;${FG}m"
+    echo -n "this is it in bold (1;38;5;${FG})"
+    echo -en "\033[0m"
+    echo
+}
+
+echo
+echo "* Solarized colors (same as ANSI, just organized differently)"
+
+solarized_color_line "black" 0
+solarized_color_line "red" 1
+solarized_color_line "yellow-green" 2
+solarized_color_line "light-orange" 3
+solarized_color_line "sky-blue" 4
+solarized_color_line "magenta" 5
+solarized_color_line "teal" 6
+solarized_color_line "white" 7
+solarized_color_line "burnt-orange" 9
+solarized_color_line "purple/violet" 13
+
+solarized_color_line "background/black" 8
+solarized_color_line "grey 0 (darkest)" 10
+solarized_color_line "grey 1" 11
+solarized_color_line "grey 2" 12
+solarized_color_line "grey 3 (lightest)" 14
+solarized_color_line "white" 15
+
+# Reset
+echo -e "\033[0m"

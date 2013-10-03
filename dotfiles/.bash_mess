@@ -1,0 +1,25 @@
+
+# function kk_test_interactive {
+#   if [ -v PS1 ]; then # double-brackets don't work  # [[ -z "$PS1" ]] , -v added in Bash4.2+
+#     echo "a: non-interactive"
+#   else
+#     echo "a: interactive"
+#   fi
+  
+#   case $- in
+#       *i*)
+#           echo "b: interactive"
+#           ;;
+#       *)
+#           echo "b: non-interactive"
+#           ;;
+#   esac
+
+#   local fd=0
+#   if [[ -t "$fd" || -p /dev/stdin ]]; then
+#       echo "c: interactive"
+#   else
+#       echo "c: non-interactive"
+#   fi
+# }
+

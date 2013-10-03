@@ -1,0 +1,80 @@
+# These are /not/ regular expressions.
+
+# Based in part on https://help.github.com/articles/ignoring-files
+
+##########
+# Object files (compilation output)
+##########
+*.com
+*.class
+*.dll
+*.so.*
+*.dylib
+*.lib
+*.a
+*.la
+*.lai
+*.exe
+*.o
+*.ko
+*.so
+*.lo
+*.slo
+*.out
+*.app
+
+##########
+# Logs and databases
+##########
+*.db
+*.sqlite
+*.sqlitedb
+*.log
+
+##########
+# Archives, packages, and disk images
+##########
+*.7z
+*.dmg
+*.gz
+*.iso
+*.img
+*.jar
+*.rar
+*.tar
+*.zip
+
+##########
+# OS trash
+##########
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+##########
+# Editor/tool trash
+##########
+*~
+\#*\#
+.\#*
+*.sublime-workspace
+
+##########
+# Python trash
+##########
+*.pyc
+__pycache__
+*.egg-info
+*.tox
+.ropeproject
+htmlcov
+.coverage*
+
+##########
+# Related to my/our tools
+##########
+.venv

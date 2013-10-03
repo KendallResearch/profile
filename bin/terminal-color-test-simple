@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Print four lines showing blocks of colors: 0-7 | 0-7bold | 8-15 | 8-15bold
+
+# https://bbs.archlinux.org/viewtopic.php?pid=1279441
+# https://gist.github.com/benizi/4173926
+# http://superuser.com/questions/512138/urxvt-bold-colors-are-wrong-bold-0-7-are-using-colors-from-8-15
+# for iTerm2, check option in preferences
+# for URXvt, set URxvt.intensityStyles: false and allow_bold: false in .Xdefaults
+
+echo "For Solarized, the top two rows should be the same and the bottom two rows should be the same."
+echo "Otherwise, your terminal is showing 'intense' text in different colors (and the Solarized theme uses those colors for background shades!)."
+
+perl -CADS -lwe '
+my $block = shift || (chr(0x2588) x 3);
+for (["", 0], ["1;", 0], ["", 8], ["1;", 8]) {
+  my ($bold, $offset) = @$_;
+  my @range = map $offset + $_, 0..7;
+  printf "%s %-6s ", $bold ? "bold" : "norm", "$range[0]-$range[-1]";
+  print map("\e[${bold}38;5;${_}m$block", @range), "\e[0m"
+}
+' "$@"
